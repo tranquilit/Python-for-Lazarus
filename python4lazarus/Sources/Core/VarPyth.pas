@@ -47,6 +47,9 @@ uses
 type
   TSequenceType = (stTuple, stList);
 
+const
+  NOARGS='--noarg--';
+
 { Python variant creation utils }
 function VarPythonCreate( AObject : PPyObject ) : Variant; overload;
 function VarPythonCreate( const AValue : Variant ) : Variant; overload;
@@ -128,7 +131,7 @@ type
   {$DEFINE USESYSTEMDISPINVOKE}  //Delphi 2010 DispInvoke is buggy
 {$ENDIF}
 {$IF DEFINED(FPC_FULLVERSION) and (FPC_FULLVERSION >= 20500)}
-  {$DEFINE USESYSTEMDISPINVOKE}
+  {.$DEFINE USESYSTEMDISPINVOKE}
 {$IFEND}
 
   { Python variant type handler }
@@ -146,7 +149,7 @@ type
     procedure PythonObjectToVarData( var Dest : TVarData; AObject : PPyObject; APythonAtomCompatible : Boolean );
     procedure PyhonVarDataCreate( var Dest : TVarData; AObject : PPyObject );
    {$IFNDEF USESYSTEMDISPINVOKE}
-    procedure DoDispInvoke(Dest: PVarData; const Source: TVarData;
+    procedure DoDispInvoke(Dest: PVarData; var Source: TVarData;
       CallDesc: PCallDesc; Params: Pointer); virtual;
     function GetPropertyWithArg(var Dest: TVarData; const V: TVarData;
       const AName: AnsiString; AArg : TVarData): Boolean; virtual;
@@ -180,9 +183,9 @@ type
       const Arguments: TVarDataArray): Boolean; override;
     function GetProperty(var Dest: TVarData; const V: TVarData;
       const AName: string): Boolean; override;
-    function SetProperty(const V: TVarData; const AName: string;
+    function SetProperty(var V: TVarData; const AName: AnsiString;
       const Value: TVarData): Boolean; override;
-    procedure DispInvoke(Dest: PVarData; const Source: TVarData;
+    procedure DispInvoke(Dest: PVarData; var Source: TVarData;
       CallDesc: PCallDesc; Params: Pointer); override;
   end;
 
@@ -933,7 +936,7 @@ const
 
 {$IFDEF USESYSTEMDISPINVOKE}
 procedure TPythonVariantType.DispInvoke(Dest: PVarData;
-  const Source: TVarData; CallDesc: PCallDesc; Params: Pointer);
+  var Source: TVarData; CallDesc: PCallDesc; Params: Pointer);
 {$IFDEF DELPHIXE2}
   //  Modified to correct memory leak QC102387
   procedure PatchedDispInvoke(Dest: PVarData;
@@ -1074,13 +1077,13 @@ end;
 
 {$ELSE USESYSTEMDISPINVOKE}
 procedure TPythonVariantType.DispInvoke(Dest: PVarData;
-  const Source: TVarData; CallDesc: PCallDesc; Params: Pointer);
+  var Source: TVarData; CallDesc: PCallDesc; Params: Pointer);
 begin
   DoDispInvoke(Dest, Source, CallDesc, Params);
 end;
 
 procedure TPythonVariantType.DoDispInvoke(Dest: PVarData;
-  const Source: TVarData; CallDesc: PCallDesc; Params: Pointer);
+  var Source: TVarData; CallDesc: PCallDesc; Params: Pointer);
 type
   PParamRec = ^TParamRec;
   TParamRec = array[0..3] of LongInt;
@@ -1111,7 +1114,8 @@ var
     begin
       LNamePtr := LNamePtr + Succ(StrLen(LNamePtr));
       fNamedParams[I-LNamedArgStart].Index := I;
-      fNamedParams[I-LNamedArgStart].Name  := AnsiString(LNamePtr);
+      //Tranquil IT Hack : named params in lowercase, the pascal compiler switches all named params to uppercase by default
+      fNamedParams[I-LNamedArgStart].Name  := lowercase(AnsiString(LNamePtr));
     end;
 
     // error is an easy expansion
@@ -1215,6 +1219,7 @@ var
   I, LArgCount: Integer;
   LIdent: AnsiString;
   LTemp: TVarData;
+  docall:Boolean;
 begin
   //------------------------------------------------------------------------------------
   // Note that this method is mostly a copy&paste from  TInvokeableVariantType.DispInvoke
@@ -1240,6 +1245,17 @@ begin
   SetLength(LStrings, LArgCount);
   for I := 0 to LArgCount - 1 do
     ParseParam(I);
+
+  // Hack Tranquil IT to call a python method with no arguments, we use a s'well known' string argument --noargs--
+  //   because pascal compiler doesn't make difference between access to a property and call of method without argument
+  if (LArgCount=1) and (LArguments[0].VType = varOleStr) and (Widestring(LArguments[0].VSTRING)=NOARGS) then
+  begin
+    LArgCount:=0;
+    SetLength(LArguments,0);
+    docall:=True;
+  end
+  else
+    docall :=False;
 
   // What type of invoke is this?
   case CallDesc^.CallType of
@@ -1271,8 +1287,10 @@ begin
       // property get or function with 0 argument
       else if LArgCount = 0 then
       begin
-        if not GetProperty(Dest^, Source, string(LIdent)) and
-           not DoFunction(Dest^, Source, string(LIdent), LArguments) then
+        //hack Tranquil IT ... first DoFunction then GetProperty if '--noargs--' is passed as first parameter
+        if not (docall and DoFunction(Dest^, Source, string(LIdent), LArguments)) and
+          not GetProperty(Dest^, Source, string(LIdent))
+          and not DoFunction(Dest^, Source, string(LIdent), LArguments) then
           RaiseDispError;
       end
 
@@ -1855,7 +1873,7 @@ begin
     Result := False;
 end;
 
-function TPythonVariantType.SetProperty(const V: TVarData;
+function TPythonVariantType.SetProperty(var V: TVarData;
   const AName: string; const Value: TVarData): Boolean;
 var
   _newValue : PPyObject;
