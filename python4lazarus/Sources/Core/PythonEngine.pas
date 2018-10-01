@@ -128,7 +128,7 @@ type
 
 const
 {$ifdef windows}
-  PYTHON_KNOWN_VERSIONS: array[1..7] of TPythonVersionProp =
+  PYTHON_KNOWN_VERSIONS: array[1..10] of TPythonVersionProp =
     (
     (DllName: 'python26.dll'; RegVersion: '2.6'; APIVersion: 1013; CanUseLatest: True),
     (DllName: 'python27.dll'; RegVersion: '2.7'; APIVersion: 1013; CanUseLatest: True),
@@ -136,11 +136,14 @@ const
     (DllName: 'python31.dll'; RegVersion: '3.1'; APIVersion: 1013; CanUseLatest: True),
     (DllName: 'python32.dll'; RegVersion: '3.2'; APIVersion: 1013; CanUseLatest: True),
     (DllName: 'python33.dll'; RegVersion: '3.3'; APIVersion: 1013; CanUseLatest: True),
-    (DllName: 'python34.dll'; RegVersion: '3.4'; APIVersion: 1013; CanUseLatest: True)
+    (DllName: 'python34.dll'; RegVersion: '3.4'; APIVersion: 1013; CanUseLatest: True),
+    (DllName: 'python35.dll'; RegVersion: '3.5'; APIVersion: 1013; CanUseLatest: True),
+    (DllName: 'python36.dll'; RegVersion: '3.6'; APIVersion: 1013; CanUseLatest: True),
+    (DllName: 'python37.dll'; RegVersion: '3.7'; APIVersion: 1013; CanUseLatest: True)
     );
 {$endif}
 {$ifdef linux}
-  PYTHON_KNOWN_VERSIONS: array[1..7] of TPythonVersionProp =
+  PYTHON_KNOWN_VERSIONS: array[1..10] of TPythonVersionProp =
     (
     (DllName: 'libpython2.6.so'; RegVersion: '2.6'; APIVersion: 1013; CanUseLatest: True),
     (DllName: 'libpython2.7.so'; RegVersion: '2.7'; APIVersion: 1013; CanUseLatest: True),
@@ -148,17 +151,23 @@ const
     (DllName: 'libpython3.1.so'; RegVersion: '3.1'; APIVersion: 1013; CanUseLatest: True),
     (DllName: 'libpython3.2.so'; RegVersion: '3.2'; APIVersion: 1013; CanUseLatest: True),
     (DllName: 'libpython3.3.so'; RegVersion: '3.3'; APIVersion: 1013; CanUseLatest: True),
-    (DllName: 'libpython3.4.so'; RegVersion: '3.4'; APIVersion: 1013; CanUseLatest: True)
+    (DllName: 'libpython3.4.so'; RegVersion: '3.4'; APIVersion: 1013; CanUseLatest: True),
+    (DllName: 'libpython3.5.so'; RegVersion: '3.5'; APIVersion: 1013; CanUseLatest: True),
+    (DllName: 'libpython3.6.so'; RegVersion: '3.6'; APIVersion: 1013; CanUseLatest: True),
+    (DllName: 'libpython3.7.so'; RegVersion: '3.7'; APIVersion: 1013; CanUseLatest: True)
     );
 {$endif}
 {$ifdef freebsd}
-  PYTHON_KNOWN_VERSIONS: array[1..1] of TPythonVersionProp =
+  PYTHON_KNOWN_VERSIONS: array[1..4] of TPythonVersionProp =
     (
-    (DllName: 'libpython3.4.so'; RegVersion: '3.4'; APIVersion: 1013; CanUseLatest: True)
+    (DllName: 'libpython3.4.so'; RegVersion: '3.4'; APIVersion: 1013; CanUseLatest: True),
+    (DllName: 'libpython3.5.so'; RegVersion: '3.5'; APIVersion: 1013; CanUseLatest: True),
+    (DllName: 'libpython3.6.so'; RegVersion: '3.6'; APIVersion: 1013; CanUseLatest: True),
+    (DllName: 'libpython3.7.so'; RegVersion: '3.7'; APIVersion: 1013; CanUseLatest: True)
     );
 {$endif}
 {$ifdef darwin}
-  PYTHON_KNOWN_VERSIONS: array[1..7] of TPythonVersionProp =
+  PYTHON_KNOWN_VERSIONS: array[1..10] of TPythonVersionProp =
     (
     (DllName: 'libpython2.6.dylib'; RegVersion: '2.6'; APIVersion: 1013; CanUseLatest: True),
     (DllName: 'libpython2.7.dylib'; RegVersion: '2.7'; APIVersion: 1013; CanUseLatest: True),
@@ -166,7 +175,10 @@ const
     (DllName: 'libpython3.1.dylib'; RegVersion: '3.1'; APIVersion: 1013; CanUseLatest: True),
     (DllName: 'libpython3.2.dylib'; RegVersion: '3.2'; APIVersion: 1013; CanUseLatest: True),
     (DllName: 'libpython3.3.dylib'; RegVersion: '3.3'; APIVersion: 1013; CanUseLatest: True),
-    (DllName: 'libpython3.4.dylib'; RegVersion: '3.4'; APIVersion: 1013; CanUseLatest: True)
+    (DllName: 'libpython3.4.dylib'; RegVersion: '3.4'; APIVersion: 1013; CanUseLatest: True),
+    (DllName: 'libpython3.5.dylib'; RegVersion: '3.5'; APIVersion: 1013; CanUseLatest: True),
+    (DllName: 'libpython3.6.dylib'; RegVersion: '3.6'; APIVersion: 1013; CanUseLatest: True),
+    (DllName: 'libpython3.7.dylib'; RegVersion: '3.7'; APIVersion: 1013; CanUseLatest: True)
     );
 {$endif}
 
@@ -809,9 +821,20 @@ type
     tp_cache            : PPyObject;
     tp_subclasses       : PPyObject;
     tp_weaklist         : PPyObject;
+    tp_del              : PyDestructor;
+    tp_version_tag      : NativeUInt;  // Type attribute cache version tag. Added in version 2.6
+    tp_finalize         : PyDestructor;
     //More spares
+    tp_xxx1             : NativeInt;
+    tp_xxx2             : NativeInt;
+    tp_xxx3             : NativeInt;
+    tp_xxx4             : NativeInt;
+    tp_xxx5             : NativeInt;
+    tp_xxx6             : NativeInt;
     tp_xxx7             : NativeInt;
-    tp_xxx8             : LongInt;
+    tp_xxx8             : NativeInt;
+    tp_xxx9             : NativeInt;
+    tp_xxx10            : NativeInt;
   end;
 
   PPyMethodChain = ^PyMethodChain;
@@ -896,42 +919,78 @@ type
     next           : PPyInterpreterState;
     tstate_head    : PPyThreadState;
 
-    modules        : PPyObject;
-    sysdict        : PPyObject;
-    builtins       : PPyObject;
+//  The strucure has changed between versions beyond this point.
+//  Not safe to use members
+//    modules        : PPyObject;
+//    sysdict        : PPyObject;
+//    builtins       : PPyObject;
 
-    checkinterval  : integer;
+    //Spares
+    is_xxx1             : NativeInt;
+    is_xxx2             : NativeInt;
+    is_xxx3             : NativeInt;
+    is_xxx4             : NativeInt;
+    is_xxx5             : NativeInt;
+    is_xxx6             : NativeInt;
+    is_xxx7             : NativeInt;
+    is_xxx8             : NativeInt;
+    is_xxx9             : NativeInt;
   end;
 
   // Thread specific information
   PyThreadState = {$IFNDEF CPUX64}packed{$ENDIF} record
+    {prev          : PPyThreadState; introduced in python 3.4}
     next           : PPyThreadState;
     interp         : PPyInterpreterState;
+    interp34       : PPyInterpreterState;
 
-    frame          : PPyFrameObject;
-    recursion_depth: integer;
-    ticker         : integer;
-    tracing        : integer;
-
-    sys_profilefn  : Pointer;           // c-functions for profile/trace
-    sys_tracefn    : Pointer;
-    sys_profilefunc: PPyObject;
-    sys_tracefunc  : PPyObject;
-
-    curexc_type    : PPyObject;
-    curexc_value   : PPyObject;
-    curexc_traceback: PPyObject;
-
-    exc_type       : PPyObject;
-    exc_value      : PPyObject;
-    exc_traceback  : PPyObject;
-
-    dict           : PPyObject;
-    tick_counter      :Integer;
-    gilstate_counter  :Integer;
-
-    async_exc         :PPyObject; { Asynchronous exception to raise }
-    thread_id         :LongInt;   { Thread id where this tstate was created }
+//  The strucure has changed between versions beyond this point.
+//  Not safe to use members
+//
+//    frame          : PPyFrameObject;
+//    recursion_depth: integer;
+//    ticker         : integer;
+//    tracing        : integer;
+//
+//    sys_profilefn  : Pointer;           // c-functions for profile/trace
+//    sys_tracefn    : Pointer;
+//    sys_profilefunc: PPyObject;
+//    sys_tracefunc  : PPyObject;
+//
+//    curexc_type    : PPyObject;
+//    curexc_value   : PPyObject;
+//    curexc_traceback: PPyObject;
+//
+//    exc_type       : PPyObject;
+//    exc_value      : PPyObject;
+//    exc_traceback  : PPyObject;
+//
+//    dict           : PPyObject;
+//    tick_counter      :Integer;
+//    gilstate_counter  :Integer;
+//
+//    async_exc         :PPyObject; { Asynchronous exception to raise }
+//    thread_id         :LongInt;   { Thread id where this tstate was created }
+    //Spares
+    ts_xxx1             : NativeInt;
+    ts_xxx2             : NativeInt;
+    ts_xxx3             : NativeInt;
+    ts_xxx4             : NativeInt;
+    ts_xxx5             : NativeInt;
+    ts_xxx6             : NativeInt;
+    ts_xxx7             : NativeInt;
+    ts_xxx8             : NativeInt;
+    ts_xxx9             : NativeInt;
+    ts_xxx10            : NativeInt;
+    ts_xxx11            : NativeInt;
+    ts_xxx12            : NativeInt;
+    ts_xxx13            : NativeInt;
+    ts_xxx14            : NativeInt;
+    ts_xxx15            : NativeInt;
+    ts_xxx16            : NativeInt;
+    ts_xxx17            : NativeInt;
+    ts_xxx18            : NativeInt;
+    ts_xxx19            : NativeInt;
 
     { XXX signal handlers should also be here }
   end;
@@ -2004,7 +2063,6 @@ type
   procedure   Py_XINCREF  ( op: PPyObject);
   procedure   Py_XDECREF  ( op: PPyObject);
 
-  function Py_GetPlatform: PAnsiChar; cdecl;
   function PyCode_Addr2Line( co: PPyCodeObject; addrq : Integer ) : Integer; cdecl;
   function Py_GetBuildInfo: PAnsiChar; cdecl;
   function PyImport_ExecCodeModule( const AName : AnsiString; codeobject : PPyObject) : PPyObject;
@@ -3566,9 +3624,9 @@ begin
   Py_InteractiveFlag         := Import('Py_InteractiveFlag');
   Py_OptimizeFlag            := Import('Py_OptimizeFlag');
   Py_NoSiteFlag              := Import('Py_NoSiteFlag');
-  Py_UseClassExceptionsFlag  := Import('Py_UseClassExceptionsFlag');
   Py_FrozenFlag              := Import('Py_FrozenFlag');
   if not IsPython3000 then begin
+    Py_UseClassExceptionsFlag  := Import('Py_UseClassExceptionsFlag');
     Py_TabcheckFlag            := Import('Py_TabcheckFlag');
     Py_UnicodeFlag             := Import('Py_UnicodeFlag');
   end;
@@ -4072,11 +4130,6 @@ end;
 procedure TPythonInterface.Py_XDECREF(op: PPyObject);
 begin
   if op <> nil then Py_DECREF(op);
-end;
-
-function TPythonInterface.Py_GetPlatform: PAnsiChar; cdecl;
-begin
-  Py_GetPlatform := 'win32';
 end;
 
 // This function is copied from compile.c because it was not
@@ -4703,9 +4756,9 @@ begin
   SetFlag(Py_InteractiveFlag, pfInteractive in FPyFlags);
   SetFlag(Py_OptimizeFlag,    pfOptimize in FPyFlags);
   SetFlag(Py_NoSiteFlag,      pfNoSite in FPyFlags);
-  SetFlag(Py_UseClassExceptionsFlag, pfUseClassExceptionsFlag in FPyFlags);
   SetFlag(Py_FrozenFlag,      pfFrozenFlag in FPyFlags);
   if not IsPython3000 then begin
+    SetFlag(Py_UseClassExceptionsFlag, pfUseClassExceptionsFlag in FPyFlags);
     SetFlag(Py_UnicodeFlag,     pfUnicode in FPyFlags);
     SetFlag(Py_TabcheckFlag,    pfTabcheck in FPyFlags);
   end;
@@ -4944,10 +4997,9 @@ var
   wargv : PPWideChar;
   WL : array of UnicodeString;
 begin
-  {$IFNDEF windows}
   Exit; //AT: code hangs on Linux x64
         //////////////////////////////
-  {$ENDIF}
+
   // we build a string list of the arguments, because ParamStr returns a volatile string
   // and we want to build an array of PAnsiChar, pointing to valid strings.
   argc := ParamCount;
@@ -6005,8 +6057,6 @@ begin
 end;
 
 function TPythonEngine.VarRecAsPyObject( v : TVarRec ) : PPyObject;
-var
-  buff : array [0..256] of AnsiChar;
 begin
   case v.VType of
     vtInteger:       Result := PyInt_FromLong( v.VInteger );
@@ -6016,7 +6066,7 @@ begin
     vtString:
     begin
       if Assigned(v.VString) then
-        Result := PyString_FromString( StrPCopy( buff, v.VString^) )
+        Result := PyString_FromString(PAnsiChar(AnsiString(v.VString^)))
       else
         Result := PyString_FromString( '' );
     end;
@@ -6142,7 +6192,7 @@ function TPythonEngine.ArrayToPyDict( items : array of const) : PPyObject;
       vtAnsiString:
         begin
           if Assigned(v.VAnsiString) then
-            Result := StrPas(PAnsiChar(Ansistring(v.VAnsiString)))
+            Result := Ansistring(v.VAnsiString)
           else
             Result := '';
         end;
