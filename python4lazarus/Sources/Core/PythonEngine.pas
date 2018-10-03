@@ -4997,9 +4997,10 @@ var
   wargv : PPWideChar;
   WL : array of UnicodeString;
 begin
+  {$IFNDEF windows}
   Exit; //AT: code hangs on Linux x64
         //////////////////////////////
-
+  {$ENDIF}
   // we build a string list of the arguments, because ParamStr returns a volatile string
   // and we want to build an array of PAnsiChar, pointing to valid strings.
   argc := ParamCount;
